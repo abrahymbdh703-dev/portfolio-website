@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: radial-gradient(circle at top, #1f2937, #0f172a);
+        }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            width: 100%;
+            max-width: 400px;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #38bdf8;
+        }
+
+        .input-group { margin-bottom: 12px; }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            transition: 0.2s;
+        }
+
+        input::placeholder { color: #cbd5e1; }
+
+        input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 8px rgba(56,189,248,0.5);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #38bdf8, #6366f1);
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: scale(1.03);
+        }
+
+        .btn:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: #fb7185;
+            font-size: 12px;
+            min-height: 14px;
+        }
+
+        .success {
+            color: #34d399;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .strength {
+            font-size: 12px;
+            margin-top: 4px;
+            color: #e2e8f0;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            font-size: 13px;
+            margin-top: 8px;
+            color: #93c5fd;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Sign Up </h2>
+
+    <form id="form">
+
+        <div class="input-group">
+            <input type="text" id="name" placeholder="Full Name">
+            <div class="error" id="nameErr"></div>
+        </div>
+
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Email">
+            <div class="error" id="emailErr"></div>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Password">
+            <div class="strength" id="strength"></div>
+            <div class="error" id="passErr"></div>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="confirm" placeholder="Confirm Password">
+            <div class="error" id="confirmErr"></div>
+        </div>
+
+        <button class="btn" id="btn" type="submit">Sign Up</button>
+
+        <div class="loader" id="loader">Creating account...</div>
+        <div class="success" id="success"></div>
+
+    </form>
+</div>
+
+<script>
+const form = document.getElementById("form");
+const btn = document.getElementById("btn");
+const loader = document.getElementById("loader");
+const pass = document.getElementById("password");
+
+function setErr(id,msg){ document.getElementById(id).innerText = msg; }
+function clearErr(){ ["nameErr","emailErr","passErr","confirmErr"].forEach(i=>setErr(i,"")); }
+
+function strength(val){
+    if(val.length < 6) return "Weak";
+    if(/[A-Z]/.test(val) && /[0-9]/.test(val)) return "Strong";
+    return "Medium";
+}
+
+pass.addEventListener("input", ()=>{
+    document.getElementById("strength").innerText = "Strength: " + strength(pass.value);
+});
+
+function checkEmail(email){
+    return new Promise(resolve=>{
+        setTimeout(()=>{
+            const taken = ["test@gmail.com","admin@gmail.com"];
+            resolve(!taken.includes(email));
+        },800);
+    });
+}
+
+form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+
+    clearErr();
+    document.getElementById("success").innerText="";
+
+    let name = document.getElementById("name").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let passv = pass.value;
+    let confirm = document.getElementById("confirm").value;
+
+    let ok = true;
+
+    if(name.length < 3){ setErr("nameErr","Name too short"); ok=false; }
+
+    let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailPattern.test(email)){ setErr("emailErr","Invalid email"); ok=false; }
+
+    if(passv.length < 6){ setErr("passErr","Weak password"); ok=false; }
+
+    if(passv !== confirm){ setErr("confirmErr","Not matching"); ok=false; }
+
+    if(!ok) return;
+
+    btn.disabled = true;
+    loader.style.display = "block";
+
+    let available = await checkEmail(email);
+
+    loader.style.display = "none";
+    btn.disabled = false;
+
+    if(!available){ setErr("emailErr","Email already exists"); return; }
+
+    document.getElementById("success").innerText = "Account created successfully! 🎉";
+
+    setTimeout(()=>{
+        localStorage.setItem("user", JSON.stringify({name,email}));
+        form.reset();
+        document.getElementById("strength").innerText="";
+    },500);
+});
+</script>
+
+</body>
+</html>
